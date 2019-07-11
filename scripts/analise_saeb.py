@@ -69,10 +69,36 @@ saeb.shape
 saeb_dummies = pd.concat([saeb, dummies], axis= 1)
 
 
- #Modelo OLS 01
+#Modelo OLS 01
 saeb_LP = saeb_dummies[['MEDIA_5EF_LP']]
 saeb_exog = saeb_dummies.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'ID_DEPENDENCIA_ADM_Privada'])
 saeb_exog = sm.add_constant(saeb_exog, prepend= False)
 modelo01 = sm.OLS(saeb_LP, saeb_exog)
 resultado01 = modelo01.fit()
 resultado01.summary()
+
+#Dados do PIB Municipal para estimar dados faltantes na categoria NIVEL_SOCIO_ECONOMICO
+pib = pd.read_excel('pucMinas/dados/PIB dos Municípios - base de dados 2010-2016.xls', sheet_name = 'PIB_dos_Municípios')
+pib.head().transpose()
+pib = pib[pib['Ano'] == 2016]
+pib = pib[['Nome da Unidade da Federação', 'Nome do Município', 'Produto Interno Bruto per capita\n(R$ 1,00)']]
+pib.dtypes
+pib['Chave'] = pib['Nome do Município'].str.cat(pib['Nome da Unidade da Federação'], sep = " ")
+
+#Dados dos municipios do Saeb
+municipios = pd.read_excel('pucMinas/dados/TS_MUNICIPIO.xlsx', sheet_name = 'TS_MUNICIPIO')
+municipios.head().transpose()
+municipios = municipios[['NO_MUNICIPIO', 'NO_UF', 'CO_MUNICIPIO']]
+municipios['Chave'] = municipios['NO_MUNICIPIO'].str.cat(municipios['NO_UF'], sep = " ")
+
+
+#Juntar os dados de pib e codigo do municipio
+municipios = municipios.join(pib.set_index('Chave'), on = 'Chave', how = 'left')
+municipios.isna().sum()
+municipios.head().transpose()
+municipios.shape
+
+#Juntar pib com dados saeb
+teste = saeb.join(municipios.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
+saeb.shape
+teste.shape
