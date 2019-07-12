@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
-import sklearn
+from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 #Carrega os dados
@@ -94,11 +97,66 @@ municipios['Chave'] = municipios['NO_MUNICIPIO'].str.cat(municipios['NO_UF'], se
 
 #Juntar os dados de pib e codigo do municipio
 municipios = municipios.join(pib.set_index('Chave'), on = 'Chave', how = 'left')
+municipios = municipios.sort_values('CO_MUNICIPIO')
+municipios = municipios.drop_duplicates(subset = 'CO_MUNICIPIO', keep = 'first')
 municipios.isna().sum()
 municipios.head().transpose()
 municipios.shape
 
-#Juntar pib com dados saeb
-teste = saeb.join(municipios.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
-saeb.shape
-teste.shape
+
+#Juntar pib com dados saeb e tirar dados faltantes tanto para pib como para nivel socio economico
+saeb_pib = saeb_dummies.join(municipios.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
+saeb_pib.shape
+saeb_pib = saeb_pib[(saeb_pib['Produto Interno Bruto per capita\n(R$ 1,00)'].notnull() | saeb_pib['NIVEL_SOCIO_ECONOMICO'].notnull())]
+saeb_pib.isnull().sum()
+
+#Separar dados para train e test para modelo de previsão de NIVEL_SOCIO_ECONOMICO
+saeb_notnull = saeb_pib[(saeb_pib['Produto Interno Bruto per capita\n(R$ 1,00)'].notnull() & saeb_pib['NIVEL_SOCIO_ECONOMICO'].notnull())]
+saeb_null = saeb_pib[saeb_pib['NIVEL_SOCIO_ECONOMICO'].isnull()]
+train, test = train_test_split(saeb_notnull, test_size = 0.2)
+trainX = train.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
+'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
+'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
+'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
+'Nome da Unidade da Federação', 'Nome do Município',])
+
+testX = test.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
+'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
+'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
+'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
+'Nome da Unidade da Federação', 'Nome do Município',])
+
+trainY = train[['NIVEL_SOCIO_ECONOMICO']]
+testY = test[['NIVEL_SOCIO_ECONOMICO']]
+
+#Modelo e estimativa de NIVEL_SOCIO_ECONOMICO com Decision Tree
+arvore = tree.DecisionTreeClassifier()
+arvore = arvore.fit(trainX, trainY)
+arvore.score(testX, testY)
+saeb_null['NIVEL_SOCIO_ECONOMICO'] = arvore.predict(saeb_null.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
+'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
+'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
+'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
+'Nome da Unidade da Federação', 'Nome do Município',]))
+saeb_null.head().transpose()
+saeb_predito = pd.concat([saeb_null, saeb_pib[saeb_pib['NIVEL_SOCIO_ECONOMICO'].notnull()]])
+saeb_predito.shape
+saeb_predito.isnull().sum()
+dummy_NSE = pd.get_dummies(saeb_predito['NIVEL_SOCIO_ECONOMICO'], drop_first=True)
+saeb_predito = pd.concat([saeb_predito, dummy_NSE], axis = 1)
+
+
+#Modelo OLS 02 - com NIVEL_SOCIO_ECONOMICO predito para escolas que não possuiam essa informação.
+saeb_LP02 = saeb_predito[['MEDIA_5EF_LP']]
+saeb_exog02 = saeb_predito.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
+'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'ID_DEPENDENCIA_ADM_Privada', 'NO_MUNICIPIO',
+'NO_UF', 'Chave', 'Nome da Unidade da Federação', 'Nome do Município',
+'Produto Interno Bruto per capita\n(R$ 1,00)'])
+saeb_exog02 = sm.add_constant(saeb_exog02, prepend= False)
+modelo02 = sm.OLS(saeb_LP02, saeb_exog02)
+resultado02 = modelo02.fit()
+resultado02.summary()
