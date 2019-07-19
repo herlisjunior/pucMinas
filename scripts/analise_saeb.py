@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 from sklearn import tree
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
@@ -46,9 +45,11 @@ saeb.dtypes
 saeb.describe().transpose()
 
 #Gráficos para análise
-saeb[['MEDIA_5EF_LP']].plot(kind = 'hist')
+saeb[['MEDIA_5EF_LP', 'MEDIA_5EF_MT']].boxplot()
 plt.show()
-saeb[['MEDIA_5EF_MT']].plot(kind = 'hist')
+saeb[['MEDIA_5EF_LP']].plot(kind = 'hist', bins = 20, weights=np.zeros_like(saeb['MEDIA_5EF_LP']) + 1. / saeb['MEDIA_5EF_LP'].size)
+plt.show()
+saeb[['MEDIA_5EF_MT']].plot(kind = 'hist', bins = 20, weights=np.zeros_like(saeb['MEDIA_5EF_MT']) + 1. / saeb['MEDIA_5EF_MT'].size)
 plt.show()
 saeb.groupby('ID_UF')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
 plt.show()
@@ -56,13 +57,19 @@ saeb.groupby('ID_DEPENDENCIA_ADM')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_v
 plt.show()
 saeb.groupby('ID_LOCALIZACAO')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
 plt.show()
+saeb.groupby('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+plt.show()
 saeb.plot(x = 'PC_FORMACAO_DOCENTE_INICIAL', y = 'MEDIA_5EF_LP', kind = 'scatter')
 plt.show()
 saeb.plot(x = 'PC_FORMACAO_DOCENTE_INICIAL', y = 'MEDIA_5EF_MT', kind = 'scatter')
 plt.show()
+saeb[['PC_FORMACAO_DOCENTE_INICIAL']].boxplot()
+plt.show()
 saeb.plot(x = 'TAXA_PARTICIPACAO_5EF', y = 'MEDIA_5EF_LP', kind = 'scatter')
 plt.show()
 saeb.plot(x = 'TAXA_PARTICIPACAO_5EF', y = 'MEDIA_5EF_MT', kind = 'scatter')
+plt.show()
+saeb[['TAXA_PARTICIPACAO_5EF']].boxplot()
 plt.show()
 
 #Criar dummys para UF, Dependência Adm e Localização
@@ -127,7 +134,6 @@ testX = test.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESC
 'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
 'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
 'Nome da Unidade da Federação', 'Nome do Município',])
-
 trainY = train[['NIVEL_SOCIO_ECONOMICO']]
 testY = test[['NIVEL_SOCIO_ECONOMICO']]
 
@@ -160,3 +166,8 @@ saeb_exog02 = sm.add_constant(saeb_exog02, prepend= False)
 modelo02 = sm.OLS(saeb_LP02, saeb_exog02)
 resultado02 = modelo02.fit()
 resultado02.summary()
+
+#Analise dados Professor
+professor = pd.read_csv('pucMinas/dados/TS_PROFESSOR.csv', sep = ",")
+professor.describe().transpose()
+professor.head().transpose()
