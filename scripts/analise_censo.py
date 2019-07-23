@@ -17,13 +17,18 @@ censo_escolas.shape
 censo_escolas.dtypes
 censo_escolas.describe().transpose()
 censo_escolas.head().transpose()
+censo_escolas['TP_DEPENDENCIA'].value_counts()
 censo_escolas['IN_LOCAL_FUNC_PREDIO_ESCOLAR'].value_counts()
 censo_escolas['IN_LOCAL_FUNC_PRISIONAL_SOCIO'].value_counts()
-pd.crosstab(censo_escolas['IN_LOCAL_FUNC_PREDIO_ESCOLAR'],censo_escolas['IN_LOCAL_FUNC_CASA_PROFESSOR'])
+censo_escolas['IN_LOCAL_FUNC_TEMPLO_IGREJA'].value_counts()
+censo_escolas['IN_LOCAL_FUNC_CASA_PROFESSOR'].value_counts()
+pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_AGUA_INEXISTENTE'], normalize='index')
 pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_LABORATORIO_CIENCIAS'], normalize='index')
 pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_AUDITORIO'], normalize='index')
 
 
 #Dados Faltantes
 censo_escolas.isna().sum()[censo_escolas.isna().sum() != 0]
+#TP_CATEGORIA_ESCOLA_PRIVADA - Escolas não privadas aparecem como NA
+#TP_OCUPACAO_PREDIO_ESCOLAR - Escolas que não funcionam em predio escolar aparecem como NA
 
