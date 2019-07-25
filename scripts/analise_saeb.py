@@ -172,8 +172,16 @@ censo_escolas = pd.read_csv('pucMinas/dados/ESCOLAS.csv', sep = '|', encoding='l
 pd.set_option('display.max_rows', None)
 #Selecionar variáveis de interesse
 censo_escolas = censo_escolas.iloc[:,[1, 4, 5, 6, 11, 13, 14, 15] + list(range(26, 105)) + list(range(120, 140))]
+
 censo_escolas = censo_escolas[censo_escolas['TP_SITUACAO_FUNCIONAMENTO'] == 1]
 censo_escolas = censo_escolas.drop(columns=['TP_OCUPACAO_GALPAO', 'TP_INDIGENA_LINGUA', 'CO_LINGUA_INDIGENA'])
+
+censo_escolas = censo_escolas.drop(columns=['TP_CATEGORIA_ESCOLA_PRIVADA', 'TP_OCUPACAO_PREDIO_ESCOLAR', 'IN_PREDIO_COMPARTILHADO', 'NU_SALAS_EXISTENTES', 'IN_FUNDAMENTAL_CICLOS', 'IN_FORMACAO_ALTERNANCIA'])
+censo_escolas.iloc[:,list(range(7, 98))] = censo_escolas.iloc[:,list(range(7, 98))].astype(int)
+censo_escolas.info()
+censo_escolas.iloc[:,list(range(7, 98))] = censo_escolas.iloc[:,list(range(7, 98))].apply(pd.to_numeric,downcast='unsigned')
+censo_escolas = censo_escolas.drop(columns=['DT_ANO_LETIVO_INICIO', 'DT_ANO_LETIVO_TERMINO'])
+
 #Analise Inicial
 censo_escolas.shape
 censo_escolas.dtypes
@@ -193,4 +201,8 @@ censo_escolas.isna().sum()[censo_escolas.isna().sum() != 0]
 #TP_OCUPACAO_PREDIO_ESCOLAR - Escolas que não funcionam em predio escolar aparecem como NA
 
 #Junção dos dados Saeb e Censo
-saeb_censo = saeb.join(censo_escolas.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left') 
+for i in range(2)
+    saeb_censo = saeb.join(censo_escolas.iloc[:[2, i]].set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
+
+saeb_censo = saeb.join(censo_escolas.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
+saeb_censo = saeb.join(censo_escolas.iloc[:,[1, 2]].set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
