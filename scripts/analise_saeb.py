@@ -175,12 +175,7 @@ censo_escolas = censo_escolas.iloc[:,[1, 4, 5, 6, 11, 13, 14, 15] + list(range(2
 
 censo_escolas = censo_escolas[censo_escolas['TP_SITUACAO_FUNCIONAMENTO'] == 1]
 censo_escolas = censo_escolas.drop(columns=['TP_OCUPACAO_GALPAO', 'TP_INDIGENA_LINGUA', 'CO_LINGUA_INDIGENA'])
-
-censo_escolas = censo_escolas.drop(columns=['TP_CATEGORIA_ESCOLA_PRIVADA', 'TP_OCUPACAO_PREDIO_ESCOLAR', 'IN_PREDIO_COMPARTILHADO', 'NU_SALAS_EXISTENTES', 'IN_FUNDAMENTAL_CICLOS', 'IN_FORMACAO_ALTERNANCIA'])
-censo_escolas.iloc[:,list(range(7, 98))] = censo_escolas.iloc[:,list(range(7, 98))].astype(int)
-censo_escolas.info()
-censo_escolas.iloc[:,list(range(7, 98))] = censo_escolas.iloc[:,list(range(7, 98))].apply(pd.to_numeric,downcast='unsigned')
-censo_escolas = censo_escolas.drop(columns=['DT_ANO_LETIVO_INICIO', 'DT_ANO_LETIVO_TERMINO'])
+censo_escolas = censo_escolas.drop(columns=['TP_CATEGORIA_ESCOLA_PRIVADA', 'TP_OCUPACAO_PREDIO_ESCOLAR', 'IN_PREDIO_COMPARTILHADO', 'NU_SALAS_EXISTENTES'])
 
 #Analise Inicial
 censo_escolas.shape
@@ -201,8 +196,46 @@ censo_escolas.isna().sum()[censo_escolas.isna().sum() != 0]
 #TP_OCUPACAO_PREDIO_ESCOLAR - Escolas que não funcionam em predio escolar aparecem como NA
 
 #Junção dos dados Saeb e Censo
-for i in range(2)
-    saeb_censo = saeb.join(censo_escolas.iloc[:[2, i]].set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
+saeb_censo = pd.merge(left= saeb, right= censo_escolas, how = 'inner', left_on = 'ID_ESCOLA', right_on = 'CO_ENTIDADE', sort = False)
+saeb_censo.shape
+saeb_censo.dtypes
 
-saeb_censo = saeb.join(censo_escolas.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
-saeb_censo = saeb.join(censo_escolas.iloc[:,[1, 2]].set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
+#Dados Faltantes da junção de Saeb e Censo
+saeb_censo.isna().sum()[saeb_censo.isna().sum() != 0]
+
+#Gráficos de Análise
+saeb_censo.groupby('IN_LOCAL_FUNC_PREDIO_ESCOLAR')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+plt.show()
+saeb_censo.groupby('IN_FORMACAO_ALTERNANCIA')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+plt.show()
+
+#Modelo OLS 3 - Com dados do Censo Escolar
+saeb_LP03 = saeb_censo[['MEDIA_5EF_LP']]
+saeb_MT03 = saeb_censo[['MEDIA_5EF_MT']]
+saeb_TOTAL03 = saeb_censo['MEDIA_5EF_LP'] + saeb_censo['MEDIA_5EF_MT']
+saeb_exog03 = saeb_censo.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
+'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE',
+'TP_SITUACAO_FUNCIONAMENTO', 'DT_ANO_LETIVO_INICIO', 'DT_ANO_LETIVO_TERMINO', 'CO_MUNICIPIO',
+'TP_DEPENDENCIA', 'TP_LOCALIZACAO', 'IN_LOCAL_FUNC_SALAS_EMPRESA', 'IN_LOCAL_FUNC_SOCIOEDUCATIVO',
+'IN_LOCAL_FUNC_UNID_PRISIONAL', 'IN_LOCAL_FUNC_PRISIONAL_SOCIO', 'IN_LOCAL_FUNC_TEMPLO_IGREJA',
+'IN_LOCAL_FUNC_CASA_PROFESSOR', 'IN_LOCAL_FUNC_GALPAO', 'IN_LOCAL_FUNC_SALAS_OUTRA_ESC',
+'IN_LOCAL_FUNC_OUTROS', ])
+saeb_exog03 = saeb_censo.loc[:,['TP_LOCALIZACAO', 'IN_LOCAL_FUNC_PRISIONAL_SOCIO', 'IN_LOCAL_FUNC_TEMPLO_IGREJA',
+'IN_LOCAL_FUNC_CASA_PROFESSOR','IN_AGUA_INEXISTENTE', 'IN_ENERGIA_INEXISTENTE',
+'IN_ESGOTO_INEXISTENTE', 'IN_LIXO_COLETA_PERIODICA','IN_LOCAL_FUNC_GALPAO', 'IN_SALA_DIRETORIA', 'IN_SALA_PROFESSOR', 'IN_LABORATORIO_INFORMATICA',
+'IN_LABORATORIO_CIENCIAS', 'IN_SALA_ATENDIMENTO_ESPECIAL', 'IN_QUADRA_ESPORTES',
+'IN_BIBLIOTECA_SALA_LEITURA', 'IN_PARQUE_INFANTIL', 'IN_BERCARIO', 'IN_BANHEIRO_EI', 'IN_DEPENDENCIAS_PNE',
+'IN_SECRETARIA', 'IN_REFEITORIO', 'IN_ALMOXARIFADO', 'IN_AUDITORIO', 'IN_PATIO_COBERTO',
+'IN_AREA_VERDE', 'IN_LAVANDERIA', 'IN_EQUIP_TV', 'IN_EQUIP_DVD', 'IN_EQUIP_COPIADORA',
+'IN_EQUIP_RETROPROJETOR', 'IN_EQUIP_IMPRESSORA', 'IN_EQUIP_SOM', 'IN_EQUIP_FOTO',
+'IN_INTERNET', 'IN_ALIMENTACAO', 'IN_FUNDAMENTAL_CICLOS', 'IN_EDUCACAO_INDIGENA', 'IN_FORMACAO_ALTERNANCIA']]
+
+saeb_exog03 = sm.add_constant(saeb_exog03, has_constant= 'add')
+modelo03 = sm.OLS(saeb_TOTAL03, saeb_exog03)
+resultado03 = modelo03.fit()
+resultado03.summary()
+resultado03.params.sort_values()
+
+saeb_LP03.describe()
+saeb_TOTAL03.describe()
