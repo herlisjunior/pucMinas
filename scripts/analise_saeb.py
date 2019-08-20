@@ -25,10 +25,11 @@ saeb = saeb.replace({'ID_DEPENDENCIA_ADM': {1:'Federal', 2:'Estadual', 3:'Munici
 saeb.loc[:,'ID_DEPENDENCIA_ADM'] = saeb.loc[:,'ID_DEPENDENCIA_ADM'].astype('category')
 saeb = saeb.replace({'ID_LOCALIZACAO': {1:'Urbana', 2:'Rural'}})
 saeb.loc[:,'ID_LOCALIZACAO'] = saeb.loc[:,'ID_LOCALIZACAO'].astype('category')
+saeb['MEDIA_5EF_TOTAL'] = saeb['MEDIA_5EF_MT'] + saeb['MEDIA_5EF_LP']
 saeb.isna().sum()
 
 #Retirar as escolas que não possuem nota, pois nota é a variável resposta.
-saeb = saeb[saeb.loc[:,'MEDIA_5EF_MT'].notnull()]
+saeb = saeb[saeb.loc[:,'MEDIA_5EF_TOTAL'].notnull()]
 saeb.isna().sum()
 
 #Devido a quantidade de registros, retirar dados NA de algumas variáveis.
@@ -51,23 +52,19 @@ saeb[['MEDIA_5EF_LP']].plot(kind = 'hist', bins = 20, weights=np.zeros_like(saeb
 plt.show()
 saeb[['MEDIA_5EF_MT']].plot(kind = 'hist', bins = 20, weights=np.zeros_like(saeb['MEDIA_5EF_MT']) + 1. / saeb['MEDIA_5EF_MT'].size)
 plt.show()
-saeb.groupby('ID_UF')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+saeb.groupby('ID_UF')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
-saeb.groupby('ID_DEPENDENCIA_ADM')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+saeb.groupby('ID_DEPENDENCIA_ADM')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
-saeb.groupby('ID_LOCALIZACAO')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+saeb.groupby('ID_LOCALIZACAO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
-saeb.groupby('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+saeb.groupby('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
-saeb.plot(x = 'PC_FORMACAO_DOCENTE_INICIAL', y = 'MEDIA_5EF_LP', kind = 'scatter')
-plt.show()
-saeb.plot(x = 'PC_FORMACAO_DOCENTE_INICIAL', y = 'MEDIA_5EF_MT', kind = 'scatter')
+saeb.plot(x = 'PC_FORMACAO_DOCENTE_INICIAL', y = 'MEDIA_5EF_TOTAL', kind = 'scatter')
 plt.show()
 saeb[['PC_FORMACAO_DOCENTE_INICIAL']].boxplot()
 plt.show()
-saeb.plot(x = 'TAXA_PARTICIPACAO_5EF', y = 'MEDIA_5EF_LP', kind = 'scatter')
-plt.show()
-saeb.plot(x = 'TAXA_PARTICIPACAO_5EF', y = 'MEDIA_5EF_MT', kind = 'scatter')
+saeb.plot(x = 'TAXA_PARTICIPACAO_5EF', y = 'MEDIA_5EF_TOTAL', kind = 'scatter')
 plt.show()
 saeb[['TAXA_PARTICIPACAO_5EF']].boxplot()
 plt.show()
@@ -80,10 +77,10 @@ saeb_dummies = pd.concat([saeb, dummies], axis= 1)
 
 
 #Modelo OLS 01
-saeb_LP = saeb_dummies[['MEDIA_5EF_LP']]
-saeb_exog = saeb_dummies.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'ID_DEPENDENCIA_ADM_Privada'])
+saeb_TOTAL = saeb_dummies[['MEDIA_5EF_TOTAL']]
+saeb_exog = saeb_dummies.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL', 'ID_DEPENDENCIA_ADM_Privada'])
 saeb_exog = sm.add_constant(saeb_exog, prepend= False)
-modelo01 = sm.OLS(saeb_LP, saeb_exog)
+modelo01 = sm.OLS(saeb_TOTAL, saeb_exog)
 resultado01 = modelo01.fit()
 resultado01.summary()
 
@@ -124,14 +121,14 @@ train, test = train_test_split(saeb_notnull, test_size = 0.2)
 trainX = train.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_TOTAL',
 'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
 'Nome da Unidade da Federação', 'Nome do Município',])
 
 testX = test.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_TOTAL',
 'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
 'Nome da Unidade da Federação', 'Nome do Município',])
 trainY = train[['NIVEL_SOCIO_ECONOMICO']]
@@ -144,7 +141,7 @@ arvore.score(testX, testY)
 saeb_null['NIVEL_SOCIO_ECONOMICO'] = arvore.predict(saeb_null.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_TOTAL',
 'MEDIA_5EF_MT', 'NO_MUNICIPIO', 'NO_UF', 'Chave',
 'Nome da Unidade da Federação', 'Nome do Município',]))
 saeb_null.head().transpose()
@@ -156,14 +153,14 @@ saeb_predito = pd.concat([saeb_predito, dummy_NSE], axis = 1)
 
 
 #Modelo OLS 02 - com NIVEL_SOCIO_ECONOMICO predito para escolas que não possuiam essa informação.
-saeb_LP02 = saeb_predito[['MEDIA_5EF_LP']]
+saeb_TOTAL02 = saeb_predito[['MEDIA_5EF_TOTAL']]
 saeb_exog02 = saeb_predito.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'ID_DEPENDENCIA_ADM_Privada', 'NO_MUNICIPIO',
+'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL', 'ID_DEPENDENCIA_ADM_Privada', 'NO_MUNICIPIO',
 'NO_UF', 'Chave', 'Nome da Unidade da Federação', 'Nome do Município',
 'Produto Interno Bruto per capita\n(R$ 1,00)'])
 saeb_exog02 = sm.add_constant(saeb_exog02, prepend= False)
-modelo02 = sm.OLS(saeb_LP02, saeb_exog02)
+modelo02 = sm.OLS(saeb_TOTAL02, saeb_exog02)
 resultado02 = modelo02.fit()
 resultado02.summary()
 
@@ -204,18 +201,16 @@ saeb_censo.dtypes
 saeb_censo.isna().sum()[saeb_censo.isna().sum() != 0]
 
 #Gráficos de Análise
-saeb_censo.groupby('IN_LOCAL_FUNC_PREDIO_ESCOLAR')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+saeb_censo.groupby('IN_LOCAL_FUNC_PREDIO_ESCOLAR')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
-saeb_censo.groupby('IN_FORMACAO_ALTERNANCIA')['MEDIA_5EF_LP', 'MEDIA_5EF_MT'].mean().sort_values(by = 'MEDIA_5EF_MT', ascending = False).plot( kind = 'bar')
+saeb_censo.groupby('IN_FORMACAO_ALTERNANCIA')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
 
 #Modelo OLS 3 - Com dados do Censo Escolar
-saeb_LP03 = saeb_censo[['MEDIA_5EF_LP']]
-saeb_MT03 = saeb_censo[['MEDIA_5EF_MT']]
-saeb_TOTAL03 = saeb_censo['MEDIA_5EF_LP'] + saeb_censo['MEDIA_5EF_MT']
+saeb_TOTAL03 = saeb_censo[['MEDIA_5EF_TOTAL']]
 saeb_exog03 = saeb_censo.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL', 'CO_ENTIDADE',
 'TP_SITUACAO_FUNCIONAMENTO', 'DT_ANO_LETIVO_INICIO', 'DT_ANO_LETIVO_TERMINO', 'CO_MUNICIPIO',
 'TP_DEPENDENCIA', 'TP_LOCALIZACAO', 'IN_LOCAL_FUNC_SALAS_EMPRESA', 'IN_LOCAL_FUNC_SOCIOEDUCATIVO',
 'IN_LOCAL_FUNC_UNID_PRISIONAL', 'IN_LOCAL_FUNC_PRISIONAL_SOCIO', 'IN_LOCAL_FUNC_TEMPLO_IGREJA',
@@ -237,5 +232,5 @@ resultado03 = modelo03.fit()
 resultado03.summary()
 resultado03.params.sort_values()
 
-saeb_LP03.describe()
+
 saeb_TOTAL03.describe()
