@@ -4,6 +4,7 @@ from sklearn import tree
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
+import seaborn as sns
 import statsmodels.api as sm
 #Carrega os dados
 saeb_dados = pd.read_csv('pucMinas/dados/SAEB_ESCOLA.csv', sep = ',')
@@ -46,27 +47,28 @@ saeb.dtypes
 saeb.describe().transpose()
 
 #Gráficos para análise
-saeb[['MEDIA_5EF_LP', 'MEDIA_5EF_MT']].boxplot()
+sns.set(style="darkgrid")
+sns.catplot(data=saeb[['MEDIA_5EF_LP', 'MEDIA_5EF_MT']], kind='box')
 plt.show()
-saeb[['MEDIA_5EF_LP']].plot(kind = 'hist', bins = 20, weights=np.zeros_like(saeb['MEDIA_5EF_LP']) + 1. / saeb['MEDIA_5EF_LP'].size)
+sns.distplot(saeb[['MEDIA_5EF_LP']])
 plt.show()
-saeb[['MEDIA_5EF_MT']].plot(kind = 'hist', bins = 20, weights=np.zeros_like(saeb['MEDIA_5EF_MT']) + 1. / saeb['MEDIA_5EF_MT'].size)
+sns.distplot(saeb[['MEDIA_5EF_MT']])
 plt.show()
-saeb.groupby('ID_UF')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
+sns.catplot(x='ID_UF', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby('ID_UF')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index)
 plt.show()
-saeb.groupby('ID_DEPENDENCIA_ADM')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
+sns.catplot(x='ID_DEPENDENCIA_ADM', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby('ID_DEPENDENCIA_ADM')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index)
 plt.show()
-saeb.groupby('ID_LOCALIZACAO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
+sns.catplot(x='ID_LOCALIZACAO', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby('ID_LOCALIZACAO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index)
 plt.show()
-saeb.groupby('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
+sns.catplot(x='NIVEL_SOCIO_ECONOMICO', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index)
 plt.show()
-saeb.plot(x = 'PC_FORMACAO_DOCENTE_INICIAL', y = 'MEDIA_5EF_TOTAL', kind = 'scatter')
+sns.relplot(x='PC_FORMACAO_DOCENTE_INICIAL', y='MEDIA_5EF_TOTAL', kind='scatter', data=saeb)
 plt.show()
-saeb[['PC_FORMACAO_DOCENTE_INICIAL']].boxplot()
+sns.catplot(data=saeb[['PC_FORMACAO_DOCENTE_INICIAL']], kind='box')
 plt.show()
-saeb.plot(x = 'TAXA_PARTICIPACAO_5EF', y = 'MEDIA_5EF_TOTAL', kind = 'scatter')
+sns.relplot(x='TAXA_PARTICIPACAO_5EF', y='MEDIA_5EF_TOTAL', kind='scatter', data=saeb)
 plt.show()
-saeb[['TAXA_PARTICIPACAO_5EF']].boxplot()
+sns.catplot(data=saeb[['TAXA_PARTICIPACAO_5EF']], kind='box')
 plt.show()
 
 #Criar dummys para UF, Dependência Adm e Localização
@@ -196,11 +198,14 @@ censo_escolas.isna().sum()[censo_escolas.isna().sum() != 0]
 saeb_censo = pd.merge(left= saeb, right= censo_escolas, how = 'inner', left_on = 'ID_ESCOLA', right_on = 'CO_ENTIDADE', sort = False)
 saeb_censo.shape
 saeb_censo.dtypes
-
+saeb_censo[['PC_FORMACAO_DOCENTE_INICIAL']].mean()
 #Dados Faltantes da junção de Saeb e Censo
 saeb_censo.isna().sum()[saeb_censo.isna().sum() != 0]
 
 #Gráficos de Análise
+sns.catplot(x='IN_LOCAL_FUNC_PREDIO_ESCOLAR', y='MEDIA_5EF_TOTAL', data=saeb_censo, row='TP_DEPENDENCIA', legend_out=True).set_xticklabels(['Não', 'Sim']).set_titles
+plt.legend(title='Funciona em prédio escolar?', labels=['Não', 'Sim'])
+sns.set()
 saeb_censo.groupby('IN_LOCAL_FUNC_PREDIO_ESCOLAR')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
 saeb_censo.groupby('IN_FORMACAO_ALTERNANCIA')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
