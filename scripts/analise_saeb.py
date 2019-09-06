@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scipy as sp
 from sklearn import tree
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
@@ -233,10 +234,12 @@ resultado03.summary()
 resultado03.params.sort_values()
 
 
-sns.heatmap(saeb_censo[['IN_ESGOTO_FOSSA', 'IN_ESGOTO_INEXISTENTE', 'IN_LIXO_COLETA_PERIODICA',
-'PC_FORMACAO_DOCENTE_INICIAL', 'IN_QUADRA_ESPORTES', 'IN_INTERNET', 'IN_SALA_PROFESSOR', 
-'IN_AGUA_REDE_PUBLICA', 'IN_BIBLIOTECA_SALA_LEITURA', 'IN_PARQUE_INFANTIL', 'IN_LABORATORIO_INFORMATICA',
-'IN_EQUIP_SOM', 'IN_EQUIP_FAX', 'IN_EQUIP_RETROPROJETOR', 'IN_EQUIP_FOTO', 
-'IN_FUNDAMENTAL_CICLOS', 'IN_EQUIP_IMPRESSORA', 'IN_LAVANDERIA',
-'IN_EQUIP_IMPRESSORA_MULT', 'IN_EQUIP_TV', 'IN_ALIMENTACAO']].corr())
+x = sp.spatial.distance.cdist(saeb_exog03.T, saeb_exog03.T)
+xpd = pd.DataFrame(x)
+xpd = xpd.drop(labels=3, axis = 1)
+xpd = xpd.drop(labels=3, axis = 0)
+xpd[[1,0]]
+sns.heatmap(xpd)
+y = pd.DataFrame({"x": [1,2], "y":[3,4]})
+y
 
