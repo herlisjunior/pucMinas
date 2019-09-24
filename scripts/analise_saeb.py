@@ -44,6 +44,7 @@ saeb.isna().sum()
 saeb = saeb[saeb.loc[:,'TAXA_PARTICIPACAO_5EF'] != 0]
 
 #Análise Inicial
+saeb.shape
 saeb.dtypes
 saeb.describe().transpose()
 
