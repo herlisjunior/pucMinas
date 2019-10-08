@@ -180,7 +180,7 @@ censo_escolas = censo_escolas.drop(columns=['TP_OCUPACAO_GALPAO', 'TP_INDIGENA_L
 censo_escolas = censo_escolas.drop(columns=['TP_CATEGORIA_ESCOLA_PRIVADA', 'TP_OCUPACAO_PREDIO_ESCOLAR', 'IN_PREDIO_COMPARTILHADO', 'NU_SALAS_EXISTENTES'])
 
 #Analise Inicial
-censo_escolas.shape
+censo_escolas.shape 
 censo_escolas.dtypes
 censo_escolas.describe().transpose()
 censo_escolas.head().transpose()
