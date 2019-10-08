@@ -47,6 +47,7 @@ saeb = saeb[saeb.loc[:,'TAXA_PARTICIPACAO_5EF'] != 0]
 saeb.shape
 saeb.dtypes
 saeb.describe().transpose()
+saeb[saeb.loc[:,'NIVEL_SOCIO_ECONOMICO'].notnull()].isna().sum()
 
 #Gráficos para análise
 sns.set(style="darkgrid")
