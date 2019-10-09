@@ -51,7 +51,8 @@ saeb[saeb.loc[:,'NIVEL_SOCIO_ECONOMICO'].notnull()].isna().sum()
 
 #Gráficos para análise
 sns.set(style="darkgrid")
-sns.catplot(data=saeb[['MEDIA_5EF_LP', 'MEDIA_5EF_MT']], kind='box')
+sns.catplot(data=saeb[['MEDIA_5EF_LP', 'MEDIA_5EF_MT']], kind='box').fig.suptitle('Distribuição das notas de matemática e português')
+plt.subplots_adjust(top=0.93)
 plt.show()
 sns.distplot(saeb[['MEDIA_5EF_LP']])
 plt.show()
