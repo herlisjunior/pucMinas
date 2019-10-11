@@ -175,7 +175,7 @@ saeb_predito = pd.concat([saeb_predito, dummy_NSE], axis = 1)
 saeb_TOTAL02 = saeb_predito[['MEDIA_5EF_TOTAL']]
 saeb_exog02 = saeb_predito.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL', 'ID_DEPENDENCIA_ADM_Privada', 'NO_MUNICIPIO',
+'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL', 'NO_MUNICIPIO',
 'NO_UF', 'Chave', 'Nome da Unidade da Federação', 'Nome do Município',
 'Produto Interno Bruto per capita\n(R$ 1,00)'])
 saeb_exog02 = sm.add_constant(saeb_exog02, prepend= False)
@@ -188,43 +188,30 @@ censo_escolas = pd.read_csv('pucMinas/dados/ESCOLAS.csv', sep = '|', encoding='l
 pd.set_option('display.max_rows', None)
 censo_escolas.shape
 #Selecionar variáveis de interesse
-censo_escolas = censo_escolas.iloc[:,[1, 4, 5, 6, 11, 13, 14, 15] + list(range(26, 105)) + list(range(120, 140))]
-
+censo_escolas = censo_escolas.iloc[:,[1, 4, 26, 40, 44, 45, 48, 49, 51, 52, 57, 58, 59, 60, 61, 65, 66, 67, 69, 70,
+71, 74, 77, 78, 79, 81, 82, 83, 87, 88, 92, 94, 96, 97, 98, 100, 101, 103, 104, 120, 121, 123]]
 censo_escolas = censo_escolas[censo_escolas['TP_SITUACAO_FUNCIONAMENTO'] == 1]
-censo_escolas = censo_escolas.drop(columns=['TP_OCUPACAO_GALPAO', 'TP_INDIGENA_LINGUA', 'CO_LINGUA_INDIGENA','IN_FUNDAMENTAL_CICLOS', 'IN_FORMACAO_ALTERNANCIA'])
-censo_escolas = censo_escolas.drop(columns=['TP_CATEGORIA_ESCOLA_PRIVADA', 'TP_OCUPACAO_PREDIO_ESCOLAR', 'IN_PREDIO_COMPARTILHADO', 'NU_SALAS_EXISTENTES'])
-
-#Analise Inicial
-censo_escolas.shape 
 censo_escolas.dtypes
-censo_escolas.describe().transpose()
-censo_escolas.head().transpose()
-censo_escolas['TP_DEPENDENCIA'].value_counts()
-censo_escolas['IN_LOCAL_FUNC_PREDIO_ESCOLAR'].value_counts()
-pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_AGUA_INEXISTENTE'], normalize='index')
-pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_LABORATORIO_CIENCIAS'], normalize='index')
-pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_AUDITORIO'], normalize='index')
-#Dados Faltantes
-censo_escolas.isna().sum()[censo_escolas.isna().sum() != 0]
 
 #Junção dos dados Saeb e Censo
 saeb_censo = pd.merge(left=saeb, right=censo_escolas, how='inner', left_on='ID_ESCOLA', right_on ='CO_ENTIDADE', sort=False)
 saeb_censo.shape
 saeb_censo.dtypes
-saeb_censo = saeb_censo.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
-'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NU_MATRICULADOS_CENSO_5EF',
-'CO_ENTIDADE', 'DT_ANO_LETIVO_INICIO', 'DT_ANO_LETIVO_TERMINO', 'CO_MUNICIPIO', 'NIVEL_SOCIO_ECONOMICO'])
+
 #Dados Faltantes da junção de Saeb e Censo
 saeb_censo.isna().sum()[saeb_censo.isna().sum() != 0]
+saeb_censo = saeb_censo.drop(columns = ['NIVEL_SOCIO_ECONOMICO', 'ID_PROVA_BRASIL', 'ID_MUNICIPIO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE'])
+
+#Analise Inicial
+saeb_censo['IN_LOCAL_FUNC_PREDIO_ESCOLAR'].value_counts()
+pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_AGUA_INEXISTENTE'], normalize='index')
+pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_LABORATORIO_CIENCIAS'], normalize='index')
+pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_AUDITORIO'], normalize='index')
 
 #Gráficos de Análise
 saeb_censo.corr()[['MEDIA_5EF_TOTAL']].sort_values(by='MEDIA_5EF_TOTAL')
-sns.heatmap(saeb_censo[['IN_ESGOTO_FOSSA', 'IN_ESGOTO_INEXISTENTE', 'IN_LIXO_COLETA_PERIODICA', 'PC_FORMACAO_DOCENTE_INICIAL', 'IN_QUADRA_ESPORTES',
-'IN_INTERNET', 'IN_SALA_PROFESSOR', 'IN_AGUA_REDE_PUBLICA', 'IN_AGUA_INEXISTENTE', 'IN_BIBLIOTECA', 'IN_PARQUE_INFANTIL', 'IN_LABORATORIO_INFORMATICA',
-'IN_EQUIP_SOM', 'IN_EQUIP_FAX', 'IN_EQUIP_RETROPROJETOR', 'IN_EQUIP_FOTO', 'IN_SECRETARIA', 'IN_SALA_DIRETORIA', 'IN_ALMOXARIFADO', 'TP_AEE',
-'IN_EQUIP_IMPRESSORA', 'IN_LAVANDERIA', 'IN_EQUIP_IMPRESSORA_MULT', 'IN_EQUIP_TV', 'IN_LABORATORIO_CIENCIAS', 'IN_ENERGIA_INEXISTENTE']].corr())
 sns.catplot(x='IN_LOCAL_FUNC_PREDIO_ESCOLAR', y='MEDIA_5EF_TOTAL', data=saeb_censo, row='TP_DEPENDENCIA', legend_out=True).set_xticklabels(['Não', 'Sim']).set_titles
-plt.legend(title='Funciona em prédio escolar?', labels=['Não', 'Sim'])
 plt.show()
 saeb_censo.groupby('IN_LOCAL_FUNC_PREDIO_ESCOLAR')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
 plt.show()
@@ -245,12 +232,12 @@ resultado03 = modelo03.fit()
 resultado03.summary()
 resultado03.params.sort_values()
 
-
+#Construir um heatmap das distâncias euclidianas
 x = sp.spatial.distance.cdist(saeb_exog03.T, saeb_exog03.T)
 xpd = pd.DataFrame(x)
-xpd = xpd.drop(labels=3, axis = 1)
-xpd = xpd.drop(labels=3, axis = 0)
-xpd[[1,0]]
+xpd = xpd.drop(labels=16, axis = 1)
+xpd = xpd.drop(labels=16, axis = 0)
+xpd
 sns.heatmap(xpd)
 y = pd.DataFrame({"x": [1,2], "y":[3,4]})
 y
