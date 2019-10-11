@@ -186,11 +186,12 @@ resultado02.summary()
 #Analise Censo
 censo_escolas = pd.read_csv('pucMinas/dados/ESCOLAS.csv', sep = '|', encoding='latin', dtype={"DT_ANO_LETIVO_INICIO": object, "DT_ANO_LETIVO_TERMINO": object})
 pd.set_option('display.max_rows', None)
+censo_escolas.shape
 #Selecionar variáveis de interesse
 censo_escolas = censo_escolas.iloc[:,[1, 4, 5, 6, 11, 13, 14, 15] + list(range(26, 105)) + list(range(120, 140))]
 
 censo_escolas = censo_escolas[censo_escolas['TP_SITUACAO_FUNCIONAMENTO'] == 1]
-censo_escolas = censo_escolas.drop(columns=['TP_OCUPACAO_GALPAO', 'TP_INDIGENA_LINGUA', 'CO_LINGUA_INDIGENA'])
+censo_escolas = censo_escolas.drop(columns=['TP_OCUPACAO_GALPAO', 'TP_INDIGENA_LINGUA', 'CO_LINGUA_INDIGENA','IN_FUNDAMENTAL_CICLOS', 'IN_FORMACAO_ALTERNANCIA'])
 censo_escolas = censo_escolas.drop(columns=['TP_CATEGORIA_ESCOLA_PRIVADA', 'TP_OCUPACAO_PREDIO_ESCOLAR', 'IN_PREDIO_COMPARTILHADO', 'NU_SALAS_EXISTENTES'])
 
 #Analise Inicial
@@ -200,16 +201,11 @@ censo_escolas.describe().transpose()
 censo_escolas.head().transpose()
 censo_escolas['TP_DEPENDENCIA'].value_counts()
 censo_escolas['IN_LOCAL_FUNC_PREDIO_ESCOLAR'].value_counts()
-censo_escolas['IN_LOCAL_FUNC_PRISIONAL_SOCIO'].value_counts()
-censo_escolas['IN_LOCAL_FUNC_TEMPLO_IGREJA'].value_counts()
-censo_escolas['IN_LOCAL_FUNC_CASA_PROFESSOR'].value_counts()
 pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_AGUA_INEXISTENTE'], normalize='index')
 pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_LABORATORIO_CIENCIAS'], normalize='index')
 pd.crosstab(censo_escolas['TP_DEPENDENCIA'],censo_escolas['IN_AUDITORIO'], normalize='index')
 #Dados Faltantes
 censo_escolas.isna().sum()[censo_escolas.isna().sum() != 0]
-#TP_CATEGORIA_ESCOLA_PRIVADA - Escolas não privadas aparecem como NA
-#TP_OCUPACAO_PREDIO_ESCOLAR - Escolas que não funcionam em predio escolar aparecem como NA
 
 #Junção dos dados Saeb e Censo
 saeb_censo = pd.merge(left=saeb, right=censo_escolas, how='inner', left_on='ID_ESCOLA', right_on ='CO_ENTIDADE', sort=False)
@@ -226,7 +222,7 @@ saeb_censo.corr()[['MEDIA_5EF_TOTAL']].sort_values(by='MEDIA_5EF_TOTAL')
 sns.heatmap(saeb_censo[['IN_ESGOTO_FOSSA', 'IN_ESGOTO_INEXISTENTE', 'IN_LIXO_COLETA_PERIODICA', 'PC_FORMACAO_DOCENTE_INICIAL', 'IN_QUADRA_ESPORTES',
 'IN_INTERNET', 'IN_SALA_PROFESSOR', 'IN_AGUA_REDE_PUBLICA', 'IN_AGUA_INEXISTENTE', 'IN_BIBLIOTECA', 'IN_PARQUE_INFANTIL', 'IN_LABORATORIO_INFORMATICA',
 'IN_EQUIP_SOM', 'IN_EQUIP_FAX', 'IN_EQUIP_RETROPROJETOR', 'IN_EQUIP_FOTO', 'IN_SECRETARIA', 'IN_SALA_DIRETORIA', 'IN_ALMOXARIFADO', 'TP_AEE',
-'IN_FUNDAMENTAL_CICLOS', 'IN_EQUIP_IMPRESSORA', 'IN_LAVANDERIA', 'IN_EQUIP_IMPRESSORA_MULT', 'IN_EQUIP_TV', 'IN_LABORATORIO_CIENCIAS', 'IN_ENERGIA_INEXISTENTE']].corr())
+'IN_EQUIP_IMPRESSORA', 'IN_LAVANDERIA', 'IN_EQUIP_IMPRESSORA_MULT', 'IN_EQUIP_TV', 'IN_LABORATORIO_CIENCIAS', 'IN_ENERGIA_INEXISTENTE']].corr())
 sns.catplot(x='IN_LOCAL_FUNC_PREDIO_ESCOLAR', y='MEDIA_5EF_TOTAL', data=saeb_censo, row='TP_DEPENDENCIA', legend_out=True).set_xticklabels(['Não', 'Sim']).set_titles
 plt.legend(title='Funciona em prédio escolar?', labels=['Não', 'Sim'])
 plt.show()
