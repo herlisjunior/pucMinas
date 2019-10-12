@@ -87,7 +87,6 @@ plt.show()
 sns.catplot(x='ID_UF', y='PC_FORMACAO_DOCENTE_INICIAL', data=saeb, kind='boxen').fig.suptitle('Distribuição da formação docente por UF', fontsize=20)
 plt.show()
 
-
 #Criar dummys para UF, Dependência Adm e Localização
 dummies = pd.get_dummies(saeb[['ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO']], drop_first= True)
 dummies.shape
@@ -116,7 +115,6 @@ municipios = pd.read_excel('pucMinas/dados/TS_MUNICIPIO.xlsx', sheet_name = 'TS_
 municipios.head().transpose()
 municipios = municipios[['NO_MUNICIPIO', 'NO_UF', 'CO_MUNICIPIO']]
 municipios['Chave'] = municipios['NO_MUNICIPIO'].str.cat(municipios['NO_UF'], sep = " ")
-
 
 #Juntar os dados de pib e codigo do municipio
 municipios = municipios.join(pib.set_index('Chave'), on = 'Chave', how = 'left')
@@ -157,6 +155,7 @@ testY = test[['NIVEL_SOCIO_ECONOMICO']]
 arvore = tree.DecisionTreeClassifier()
 arvore = arvore.fit(trainX, trainY)
 arvore.score(testX, testY)
+arvore.get_
 saeb_null['NIVEL_SOCIO_ECONOMICO'] = arvore.predict(saeb_null.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
@@ -188,7 +187,7 @@ censo_escolas = pd.read_csv('pucMinas/dados/ESCOLAS.csv', sep = '|', encoding='l
 pd.set_option('display.max_rows', None)
 censo_escolas.shape
 #Selecionar variáveis de interesse
-censo_escolas = censo_escolas.iloc[:,[1, 4, 26, 40, 44, 45, 48, 49, 51, 52, 57, 58, 59, 60, 61, 65, 66, 67, 69, 70,
+censo_escolas = censo_escolas.iloc[:,[1, 4, 26, 40, 44, 45, 48, 49, 51, 52, 57, 58, 59, 60, 61, 65, 66, 69, 70,
 71, 74, 77, 78, 79, 81, 82, 83, 87, 88, 92, 94, 96, 97, 98, 100, 101, 103, 104, 120, 121, 123]]
 censo_escolas = censo_escolas[censo_escolas['TP_SITUACAO_FUNCIONAMENTO'] == 1]
 censo_escolas.dtypes
@@ -200,8 +199,8 @@ saeb_censo.dtypes
 
 #Dados Faltantes da junção de Saeb e Censo
 saeb_censo.isna().sum()[saeb_censo.isna().sum() != 0]
-saeb_censo = saeb_censo.drop(columns = ['NIVEL_SOCIO_ECONOMICO', 'ID_PROVA_BRASIL', 'ID_MUNICIPIO', 'NU_MATRICULADOS_CENSO_5EF',
-'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE'])
+saeb_censo = saeb_censo.drop(columns = ['NIVEL_SOCIO_ECONOMICO', 'ID_PROVA_BRASIL', 'ID_ESCOLA', 'ID_MUNICIPIO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE', 'TP_SITUACAO_FUNCIONAMENTO'])
 
 #Analise Inicial
 saeb_censo['IN_LOCAL_FUNC_PREDIO_ESCOLAR'].value_counts()
@@ -210,21 +209,27 @@ pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_LABORATORIO_CIENCIAS
 pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_AUDITORIO'], normalize='index')
 
 #Gráficos de Análise
-saeb_censo.corr()[['MEDIA_5EF_TOTAL']].sort_values(by='MEDIA_5EF_TOTAL')
-sns.catplot(x='IN_LOCAL_FUNC_PREDIO_ESCOLAR', y='MEDIA_5EF_TOTAL', data=saeb_censo, row='TP_DEPENDENCIA', legend_out=True).set_xticklabels(['Não', 'Sim']).set_titles
+sns.catplot(x='ID_UF', y='MEDIA_5EF_TOTAL', data=saeb_censo, hue='IN_PARQUE_INFANTIL', legend_out=True, kind='boxen').fig.suptitle('Distribuição da nota por UF considerando a presença de parque infantil', fontsize=20)
 plt.show()
-saeb_censo.groupby('IN_LOCAL_FUNC_PREDIO_ESCOLAR')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
+sns.catplot(x='ID_DEPENDENCIA_ADM', y='IN_INTERNET', data=saeb_censo, legend_out=True, kind='bar').fig.suptitle('Percentual de escolas que possuem internet por dependência administrativa', fontsize=20)
 plt.show()
-saeb_censo.groupby('IN_FORMACAO_ALTERNANCIA')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).plot( kind = 'bar')
+sns.catplot(x='ID_DEPENDENCIA_ADM', y='IN_BIBLIOTECA_SALA_LEITURA', data=saeb_censo, legend_out=True, kind='bar').fig.suptitle('Percentual de escolas que possuem biblioteca por dependência administrativa', fontsize=20)
+plt.show()
+sns.catplot(x='IN_ENERGIA_REDE_PUBLICA', y='MEDIA_5EF_TOTAL', data=saeb_censo, legend_out=True, kind='boxen').fig.suptitle('Distribuição das notas com relação à disponibilidade de energia da rede pública', fontsize=20)
+plt.show()
+
+#Construir um heatmap das distâncias euclidianas
+dados_heat = saeb_censo.drop(columns=['MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL'])
+x = sp.spatial.distance.cdist(dados_heat.T, dados_heat.T)
+xpd = pd.DataFrame(x)
+heat = sns.heatmap(xpd, xticklabels=True, yticklabels=True)
+heat.set_xticklabels(labels=xpd.columns.values, rotation=0, ha='center')
+plt.title('Distância Euclidiana das variáveis dependentes do censo escolar')
 plt.show()
 
 #Modelo OLS 3 - Com dados do Censo Escolar
 saeb_TOTAL03 = saeb_censo[['MEDIA_5EF_TOTAL']]
-saeb_exog03 = saeb_censo.loc[:,['IN_ESGOTO_FOSSA', 'IN_ESGOTO_INEXISTENTE', 'IN_LIXO_COLETA_PERIODICA',
-'PC_FORMACAO_DOCENTE_INICIAL', 'IN_QUADRA_ESPORTES', 'IN_INTERNET', 'IN_SALA_PROFESSOR', 'IN_AGUA_REDE_PUBLICA',
-'IN_BIBLIOTECA_SALA_LEITURA', 'IN_PARQUE_INFANTIL', 'IN_LABORATORIO_INFORMATICA',
-'IN_EQUIP_SOM', 'IN_EQUIP_FAX', 'IN_EQUIP_RETROPROJETOR', 'IN_EQUIP_FOTO', 
-'IN_FUNDAMENTAL_CICLOS', 'IN_EQUIP_IMPRESSORA', 'IN_LAVANDERIA', 'IN_EQUIP_IMPRESSORA_MULT', 'IN_EQUIP_TV', 'IN_ALIMENTACAO']]
+saeb_exog03 = saeb_censo.drop(columns=['MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL'])
 
 saeb_exog03 = sm.add_constant(saeb_exog03, has_constant= 'add')
 modelo03 = sm.OLS(saeb_TOTAL03, saeb_exog03)
@@ -232,13 +237,9 @@ resultado03 = modelo03.fit()
 resultado03.summary()
 resultado03.params.sort_values()
 
-#Construir um heatmap das distâncias euclidianas
-x = sp.spatial.distance.cdist(saeb_exog03.T, saeb_exog03.T)
-xpd = pd.DataFrame(x)
-xpd = xpd.drop(labels=16, axis = 1)
-xpd = xpd.drop(labels=16, axis = 0)
-xpd
-sns.heatmap(xpd)
-y = pd.DataFrame({"x": [1,2], "y":[3,4]})
-y
+
+#Modelo OLS 4 - Seleção de dados do Censo Escolar e Dados adicionais do Saeb
+
+
+#Modelo OLS 5 - Seleção de dados do Censo Escolar, Dados adicionais e Nível Socioeconômico
 
