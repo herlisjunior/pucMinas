@@ -199,7 +199,7 @@ saeb_censo.dtypes
 
 #Dados Faltantes da junção de Saeb e Censo
 saeb_censo.isna().sum()[saeb_censo.isna().sum() != 0]
-saeb_censo = saeb_censo.drop(columns = ['NIVEL_SOCIO_ECONOMICO', 'ID_PROVA_BRASIL', 'ID_ESCOLA', 'ID_MUNICIPIO', 'NU_MATRICULADOS_CENSO_5EF',
+saeb_censo = saeb_censo.drop(columns = ['ID_PROVA_BRASIL', 'ID_ESCOLA', 'ID_MUNICIPIO', 'NU_MATRICULADOS_CENSO_5EF',
 'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE', 'TP_SITUACAO_FUNCIONAMENTO'])
 
 #Analise Inicial
@@ -219,18 +219,19 @@ sns.catplot(x='IN_ENERGIA_REDE_PUBLICA', y='MEDIA_5EF_TOTAL', data=saeb_censo, l
 plt.show()
 
 #Construir um heatmap das distâncias euclidianas
-dados_heat = saeb_censo.drop(columns=['MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL'])
+dados_heat = saeb_censo.drop(columns=['MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL', 'NIVEL_SOCIO_ECONOMICO'])
 x = sp.spatial.distance.cdist(dados_heat.T, dados_heat.T)
 xpd = pd.DataFrame(x)
 heat = sns.heatmap(xpd, xticklabels=True, yticklabels=True)
 heat.set_xticklabels(labels=xpd.columns.values, rotation=0, ha='center')
-plt.title('Distância Euclidiana das variáveis dependentes do censo escolar')
+plt.title('Distância Euclidiana das variáveis do censo escolar', fontsize=20)
 plt.show()
+nomes_variaveis = pd.DataFrame({'numero':xpd.columns.values, 'variavel':dados_heat.columns.values})
+nomes_variaveis
 
 #Modelo OLS 3 - Com dados do Censo Escolar
 saeb_TOTAL03 = saeb_censo[['MEDIA_5EF_TOTAL']]
-saeb_exog03 = saeb_censo.drop(columns=['MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL'])
-
+saeb_exog03 = saeb_censo.drop(columns=['NIVEL_SOCIO_ECONOMICO', 'MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL'])
 saeb_exog03 = sm.add_constant(saeb_exog03, has_constant= 'add')
 modelo03 = sm.OLS(saeb_TOTAL03, saeb_exog03)
 resultado03 = modelo03.fit()
@@ -238,8 +239,72 @@ resultado03.summary()
 resultado03.params.sort_values()
 
 
-#Modelo OLS 4 - Seleção de dados do Censo Escolar e Dados adicionais do Saeb
+#Modelo OLS 4 - Seleção de dados do Censo Escolar, com base na significância e dist. euclidiana
+dist_alto = xpd[xpd<=60]
+dist_alto.columns = dados_heat.columns.values
+dist_alto.index = dados_heat.columns.values
+sns.heatmap(dist_alto, xticklabels=True, yticklabels=True)
+plt.show()
+saeb_TOTAL04 = saeb_censo[['MEDIA_5EF_TOTAL']]
+saeb_exog04 = saeb_censo.drop(columns=['NIVEL_SOCIO_ECONOMICO', 'MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
+'IN_COZINHA', 'IN_ENERGIA_INEXISTENTE', 'IN_BERCARIO', 'IN_LIXO_OUTROS', 'IN_COMPUTADOR', 'IN_SECRETARIA', 'IN_BANHEIRO_CHUVEIRO',
+'IN_LOCAL_FUNC_PREDIO_ESCOLAR', 'IN_AGUA_INEXISTENTE', 'IN_SALA_DIRETORIA', 'IN_LABORATORIO_CIENCIAS', 'IN_EQUIP_DVD', 'IN_EQUIP_COPIADORA',
+'IN_BANHEIRO_EI', 'IN_AUDITORIO'])
+saeb_exog04 = sm.add_constant(saeb_exog04, has_constant= 'add')
+modelo04 = sm.OLS(saeb_TOTAL04, saeb_exog04)
+resultado04 = modelo04.fit()
+resultado04.summary()
+resultado04.params.sort_values()
 
+#Modelo OLS 5 - Seleção de dados do Censo Escolar e Dados adicionais do Saeb
+dummies_censo = pd.get_dummies(saeb_censo[['ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO']], drop_first= True)
+saeb_censo_dummies = pd.concat([saeb_censo, dummies_censo], axis= 1)
+saeb_TOTAL05 = saeb_censo_dummies[['MEDIA_5EF_TOTAL']]
+saeb_exog05 = saeb_censo_dummies.drop(columns=['NIVEL_SOCIO_ECONOMICO', 'MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO',
+'IN_COZINHA', 'IN_ENERGIA_INEXISTENTE', 'IN_BERCARIO', 'IN_LIXO_OUTROS', 'IN_COMPUTADOR', 'IN_SECRETARIA', 'IN_BANHEIRO_CHUVEIRO',
+'IN_LOCAL_FUNC_PREDIO_ESCOLAR', 'IN_AGUA_INEXISTENTE', 'IN_SALA_DIRETORIA', 'IN_LABORATORIO_CIENCIAS', 'IN_EQUIP_DVD', 'IN_EQUIP_COPIADORA',
+'IN_BANHEIRO_EI', 'IN_AUDITORIO'])
+saeb_exog05 = sm.add_constant(saeb_exog05, has_constant= 'add')
+modelo05 = sm.OLS(saeb_TOTAL05, saeb_exog05)
+resultado05 = modelo05.fit()
+resultado05.summary()
+resultado05.params.sort_values()
 
-#Modelo OLS 5 - Seleção de dados do Censo Escolar, Dados adicionais e Nível Socioeconômico
+#Modelo OLS 6 - Seleção de dados do Censo Escolar, Dados adicionais e Nível Socioeconômico sem dados faltantes
+saeb_censo_socio = saeb_censo[saeb_censo.loc[:,'NIVEL_SOCIO_ECONOMICO'].notnull()]
+saeb_censo_socio.shape
+dummies_censo_socio = pd.get_dummies(saeb_censo_socio[['ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO']], drop_first= True)
+saeb_censo_dummies_socio = pd.concat([saeb_censo_socio, dummies_censo_socio], axis= 1)
+saeb_censo_dummies_socio.shape
+saeb_TOTAL06 = saeb_censo_dummies_socio[['MEDIA_5EF_TOTAL']]
+saeb_exog06 = saeb_censo_dummies_socio.drop(columns=['NIVEL_SOCIO_ECONOMICO', 'MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO',
+'IN_COZINHA', 'IN_ENERGIA_INEXISTENTE', 'IN_BERCARIO', 'IN_LIXO_OUTROS', 'IN_COMPUTADOR', 'IN_SECRETARIA', 'IN_BANHEIRO_CHUVEIRO',
+'IN_LOCAL_FUNC_PREDIO_ESCOLAR', 'IN_AGUA_INEXISTENTE', 'IN_SALA_DIRETORIA', 'IN_LABORATORIO_CIENCIAS', 'IN_EQUIP_DVD', 'IN_EQUIP_COPIADORA',
+'IN_BANHEIRO_EI', 'IN_AUDITORIO'])
+saeb_exog06 = sm.add_constant(saeb_exog06, has_constant= 'add')
+modelo06 = sm.OLS(saeb_TOTAL06, saeb_exog06)
+resultado06 = modelo06.fit()
+resultado06.summary()
+resultado06.params.sort_values()
 
+#Modelo OLS 7 - Seleção de dados do Censo Escolar, Dados adicionais e Nível Socioeconômico COM dados faltantes
+saeb_predito02 = saeb_predito[['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO',
+'PC_FORMACAO_DOCENTE_INICIAL', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF',
+'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL']]
+saeb_censo_predito = pd.merge(left=saeb_predito02, right=censo_escolas, how='inner', left_on='ID_ESCOLA', right_on ='CO_ENTIDADE', sort=False)
+saeb_censo_predito = saeb_censo_predito.drop(columns = ['ID_PROVA_BRASIL', 'ID_ESCOLA', 'ID_MUNICIPIO', 'NU_MATRICULADOS_CENSO_5EF',
+'NU_PRESENTES_5EF', 'TAXA_PARTICIPACAO_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'CO_ENTIDADE', 'TP_SITUACAO_FUNCIONAMENTO'])
+saeb_censo_predito.shape
+dummies_censo_socio02 = pd.get_dummies(saeb_censo_predito[['ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO']], drop_first= True)
+saeb_censo_dummies_pred = pd.concat([saeb_censo_predito, dummies_censo_socio02], axis= 1)
+saeb_censo_dummies_pred.shape
+saeb_TOTAL07 = saeb_censo_dummies_pred[['MEDIA_5EF_TOTAL']]
+saeb_exog07 = saeb_censo_dummies_pred.drop(columns=['NIVEL_SOCIO_ECONOMICO', 'MEDIA_5EF_TOTAL', 'ID_UF', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO',
+'IN_COZINHA', 'IN_ENERGIA_INEXISTENTE', 'IN_BERCARIO', 'IN_LIXO_OUTROS', 'IN_COMPUTADOR', 'IN_SECRETARIA', 'IN_BANHEIRO_CHUVEIRO',
+'IN_LOCAL_FUNC_PREDIO_ESCOLAR', 'IN_AGUA_INEXISTENTE', 'IN_SALA_DIRETORIA', 'IN_LABORATORIO_CIENCIAS', 'IN_EQUIP_DVD', 'IN_EQUIP_COPIADORA',
+'IN_BANHEIRO_EI', 'IN_AUDITORIO'])
+saeb_exog07 = sm.add_constant(saeb_exog07, has_constant= 'add')
+modelo07 = sm.OLS(saeb_TOTAL07, saeb_exog07)
+resultado07 = modelo07.fit()
+resultado07.summary()
+resultado07.params.sort_values()
