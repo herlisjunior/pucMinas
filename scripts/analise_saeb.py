@@ -87,7 +87,6 @@ dummies.shape
 saeb.shape
 saeb_dummies = pd.concat([saeb, dummies], axis= 1)
 
-
 #Modelo OLS 01
 saeb_TOTAL = saeb_dummies[['MEDIA_5EF_TOTAL']]
 saeb_exog = saeb_dummies.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL'])
@@ -148,7 +147,7 @@ testY = test[['NIVEL_SOCIO_ECONOMICO']]
 arvore = tree.DecisionTreeClassifier()
 arvore = arvore.fit(trainX, trainY)
 arvore.score(testX, testY)
-arvore.get_
+
 saeb_null['NIVEL_SOCIO_ECONOMICO'] = arvore.predict(saeb_null.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA',
 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'PC_FORMACAO_DOCENTE_INICIAL',
 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF',
