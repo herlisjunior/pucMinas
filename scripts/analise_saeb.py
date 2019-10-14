@@ -51,32 +51,26 @@ saeb.describe().transpose()
 saeb[saeb.loc[:,'NIVEL_SOCIO_ECONOMICO'].notnull()].isna().sum()
 
 #Gráficos para análise
-sns.set(style="darkgrid")
+sns.set_context("paper", rc={"font.size":18,"axes.titlesize":20,"axes.labelsize":18, "xtick.labelsize":16, "ytick.labelsize":16, "legend.fontsize":16})
 sns.catplot(data=saeb[['MEDIA_5EF_LP', 'MEDIA_5EF_MT']], kind='box').fig.suptitle('Distribuição das notas de matemática e português')
-plt.subplots_adjust(top=0.93)
 plt.show()
 sns.distplot(saeb[['MEDIA_5EF_LP']])
 plt.show()
 sns.distplot(saeb[['MEDIA_5EF_MT']])
 plt.show()
 sns.catplot(x='ID_UF', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby('ID_UF')
-['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por estado', fontsize=20)
-plt.subplots_adjust(top=0.93)
+['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por estado')
 plt.show()
 sns.catplot(x='ID_DEPENDENCIA_ADM', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby
-('ID_DEPENDENCIA_ADM')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por dependência administrativa', fontsize=20)
-plt.subplots_adjust(top=0.93)
+('ID_DEPENDENCIA_ADM')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por dependência administrativa')
 plt.show()
 sns.catplot(x='ID_LOCALIZACAO', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby('ID_LOCALIZACAO')
-['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por localização', fontsize=20)
-plt.subplots_adjust(top=0.93)
+['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por localização')
 plt.show()
 sns.catplot(x='NIVEL_SOCIO_ECONOMICO', y='MEDIA_5EF_TOTAL', data=saeb, kind='bar', estimator=np.mean, order=saeb.groupby
-('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por nível socioeconômico', fontsize=20)
-plt.subplots_adjust(top=0.93)
+('NIVEL_SOCIO_ECONOMICO')['MEDIA_5EF_TOTAL'].mean().sort_values(ascending = False).index).fig.suptitle('Distribuição da nota total média por nível socioeconômico')
 plt.show()
-sns.relplot(x='PC_FORMACAO_DOCENTE_INICIAL', y='MEDIA_5EF_TOTAL', kind='scatter', data=saeb, marker='+', hue='PC_FORMACAO_DOCENTE_INICIAL', legend=False).fig.suptitle('Distribuição da nota total média e da formação docente', fontsize=20)
-plt.subplots_adjust(top=0.93)
+sns.relplot(x='PC_FORMACAO_DOCENTE_INICIAL', y='MEDIA_5EF_TOTAL', kind='scatter', data=saeb, marker='+', hue='PC_FORMACAO_DOCENTE_INICIAL', legend=False).fig.suptitle('Distribuição da nota total média e da formação docente')
 plt.show()
 sns.catplot(data=saeb[['PC_FORMACAO_DOCENTE_INICIAL']], kind='box')
 plt.show()
@@ -84,7 +78,7 @@ sns.relplot(x='TAXA_PARTICIPACAO_5EF', y='MEDIA_5EF_TOTAL', kind='scatter', data
 plt.show()
 sns.catplot(data=saeb[['TAXA_PARTICIPACAO_5EF']], kind='box')
 plt.show()
-sns.catplot(x='ID_UF', y='PC_FORMACAO_DOCENTE_INICIAL', data=saeb, kind='boxen').fig.suptitle('Distribuição da formação docente por UF', fontsize=20)
+sns.catplot(x='ID_UF', y='PC_FORMACAO_DOCENTE_INICIAL', data=saeb, kind='boxen').fig.suptitle('Distribuição da formação docente por UF')
 plt.show()
 
 #Criar dummys para UF, Dependência Adm e Localização
@@ -96,7 +90,7 @@ saeb_dummies = pd.concat([saeb, dummies], axis= 1)
 
 #Modelo OLS 01
 saeb_TOTAL = saeb_dummies[['MEDIA_5EF_TOTAL']]
-saeb_exog = saeb_dummies.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL', 'ID_DEPENDENCIA_ADM_Privada'])
+saeb_exog = saeb_dummies.drop(columns = ['ID_PROVA_BRASIL', 'ID_UF', 'ID_MUNICIPIO', 'ID_ESCOLA', 'ID_DEPENDENCIA_ADM', 'ID_LOCALIZACAO', 'NIVEL_SOCIO_ECONOMICO', 'NU_MATRICULADOS_CENSO_5EF', 'NU_PRESENTES_5EF', 'MEDIA_5EF_LP', 'MEDIA_5EF_MT', 'MEDIA_5EF_TOTAL'])
 saeb_exog = sm.add_constant(saeb_exog, prepend= False)
 modelo01 = sm.OLS(saeb_TOTAL, saeb_exog)
 resultado01 = modelo01.fit()
@@ -123,7 +117,6 @@ municipios = municipios.drop_duplicates(subset = 'CO_MUNICIPIO', keep = 'first')
 municipios.isna().sum()
 municipios.head().transpose()
 municipios.shape
-
 
 #Juntar pib com dados saeb e tirar dados faltantes tanto para pib como para nivel socio economico
 saeb_pib = saeb_dummies.join(municipios.set_index('CO_MUNICIPIO'), on = 'ID_MUNICIPIO', how = 'left')
@@ -209,13 +202,22 @@ pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_LABORATORIO_CIENCIAS
 pd.crosstab(saeb_censo['ID_DEPENDENCIA_ADM'],saeb_censo['IN_AUDITORIO'], normalize='index')
 
 #Gráficos de Análise
-sns.catplot(x='ID_UF', y='MEDIA_5EF_TOTAL', data=saeb_censo, hue='IN_PARQUE_INFANTIL', legend_out=True, kind='boxen').fig.suptitle('Distribuição da nota por UF considerando a presença de parque infantil', fontsize=20)
+sns.set_context("paper", rc={"font.size":18,"axes.titlesize":20,"axes.labelsize":18, "xtick.labelsize":16, "ytick.labelsize":16, "legend.fontsize":16})
+g = sns.catplot(x='ID_UF', y='MEDIA_5EF_TOTAL', data=saeb_censo, hue='IN_PARQUE_INFANTIL', kind='boxen')
+g.fig.suptitle('Distribuição da nota por UF considerando a presença de parque infantil')
+new_labels = ['Não', 'Sim']
+for t, l in zip(g._legend.texts, new_labels): t.set_text(l)
+
 plt.show()
-sns.catplot(x='ID_DEPENDENCIA_ADM', y='IN_INTERNET', data=saeb_censo, legend_out=True, kind='bar').fig.suptitle('Percentual de escolas que possuem internet por dependência administrativa', fontsize=20)
+sns.catplot(x='ID_DEPENDENCIA_ADM', y='IN_INTERNET', data=saeb_censo, kind='bar', palette=sns.color_palette('Paired', 4)).fig.suptitle('Percentual de escolas que possuem internet por dependência administrativa')
 plt.show()
-sns.catplot(x='ID_DEPENDENCIA_ADM', y='IN_BIBLIOTECA_SALA_LEITURA', data=saeb_censo, legend_out=True, kind='bar').fig.suptitle('Percentual de escolas que possuem biblioteca por dependência administrativa', fontsize=20)
+sns.catplot(x='ID_DEPENDENCIA_ADM', y='IN_BIBLIOTECA_SALA_LEITURA', data=saeb_censo, kind='bar', palette=sns.color_palette('Spectral', 5)).fig.suptitle('Percentual de escolas que possuem biblioteca por dependência administrativa')
 plt.show()
-sns.catplot(x='IN_ENERGIA_REDE_PUBLICA', y='MEDIA_5EF_TOTAL', data=saeb_censo, legend_out=True, kind='boxen').fig.suptitle('Distribuição das notas com relação à disponibilidade de energia da rede pública', fontsize=20)
+sns.catplot(x='ID_LOCALIZACAO', y='IN_LABORATORIO_INFORMATICA', data=saeb_censo, kind='bar', palette=sns.color_palette('cubehelix', 8)).fig.suptitle('Percentual de escolas que possuem laboratório de informática por localização da escola')
+plt.show()
+grafico=sns.catplot(x='IN_ENERGIA_REDE_PUBLICA', y='MEDIA_5EF_TOTAL', data=saeb_censo, kind='boxen')
+grafico.set_xticklabels(['Não', 'Sim'])
+grafico.fig.suptitle('Distribuição das notas com relação à disponibilidade de energia da rede pública')
 plt.show()
 
 #Construir um heatmap das distâncias euclidianas
@@ -224,7 +226,7 @@ x = sp.spatial.distance.cdist(dados_heat.T, dados_heat.T)
 xpd = pd.DataFrame(x)
 heat = sns.heatmap(xpd, xticklabels=True, yticklabels=True)
 heat.set_xticklabels(labels=xpd.columns.values, rotation=0, ha='center')
-plt.title('Distância Euclidiana das variáveis do censo escolar', fontsize=20)
+plt.title('Distância Euclidiana das variáveis do censo escolar')
 plt.show()
 nomes_variaveis = pd.DataFrame({'numero':xpd.columns.values, 'variavel':dados_heat.columns.values})
 nomes_variaveis
