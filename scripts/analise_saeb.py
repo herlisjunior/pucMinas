@@ -270,6 +270,7 @@ saeb_exog05 = saeb_censo_dummies_socio.drop(columns=['NIVEL_SOCIO_ECONOMICO', 'M
 'IN_BANHEIRO_EI', 'IN_AUDITORIO'])
 saeb_exog05 = sm.add_constant(saeb_exog05, has_constant= 'add')
 modelo05 = sm.OLS(saeb_TOTAL05, saeb_exog05)
+resultado05 = modelo05.fit()
 resultado05.summary()
 resultado05.params.sort_values()
 
